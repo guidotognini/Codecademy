@@ -1,0 +1,123 @@
+/// Returns a random DNA base
+const returnRandBase = () => {
+  const dnaBases = ["A", "T", "C", "G"];
+  return dnaBases[Math.floor(Math.random() * 4)];
+};
+
+// Returns a random single stand of DNA containing 15 bases
+const mockUpStrand = () => {
+  const newStrand = [];
+  for (let i = 0; i < 15; i++) {
+    newStrand.push(returnRandBase());
+  }
+  return newStrand;
+};
+
+//memory for the already existent species numbers so they do not repeat
+let speciesNumsArray = [];
+
+//factory function to create new Specimens
+const pAequorFactory = (specimenNum, dna) => {
+   
+  //checking if the number set to the species already exists, otherwise we set another element to it and the new number is logged.
+  while (speciesNumsArray.some(elem => elem === specimenNum)) {
+    specimenNum++;
+    if((speciesNumsArray.some(elem => elem === specimenNum)) === false){
+      console.log(`The specimenNum chosen was no longer available, so the number ${specimenNum} was set to it.`)
+    }
+  }
+  
+  //updating the speciesNumArray with the addition of the new specimen number
+  speciesNumsArray.push(specimenNum)
+  return {
+    specimenNum: specimenNum,
+    dna,
+    // changing all dna bases and returning full dna strand
+    mutate() {
+      for (let i = 0; i < this.dna.length; i++) {
+        let previousDna = this.dna[i];
+        while (this.dna[i] === previousDna) this.dna[i] = returnRandBase();
+      }
+      return this.dna;
+    },
+    //comparing specimens dna and returning percentage of similarity
+    compareDna (anotherSpecimen) {
+      let counter = 0;
+      for(let i = 0;i < this.dna.length; i++){
+        if(this.dna[i] === anotherSpecimen.dna[i]){
+          counter ++;
+        }
+      }
+      console.log(`specimen #${this.specimenNum} and specimen #${anotherSpecimen.specimenNum} have ${counter/this.dna.length*100}% DNA in common`)
+      return counter/this.dna.length*100
+    },
+    willLikelySurvive () {
+      let counter = 0;
+      for(let i = 0;i < this.dna.length;i++){
+        if(this.dna[i]==='C' || this.dna[i] === 'G'){
+          counter ++;
+        }
+      }
+      if(counter/this.dna.length >= 0.6) {
+        return true
+      } else {return false}
+    },
+    complementStrand () {
+      let complementArr = [];
+      for(let i = 0; i<this.dna.length;i++){
+        switch (this.dna[i]) {
+          case 'A': 
+            complementArr.push('T');
+            break;
+          case 'T':
+            complementArr.push('A')
+            break;
+          case 'C':
+            complementArr.push('G');
+            break;
+          case 'G':
+            complementArr.push('C');
+            break;
+          default:
+            'invalid char'
+        }
+      }
+      return complementArr;
+    }
+  }
+};
+
+let willLikelySurviveArray = [];
+
+const getSurvivors = num => {
+  let speciesSlot = pAequorFactory(0, mockUpStrand());
+
+  for(let i = 0; i < num; i++){
+
+    while(speciesSlot.willLikelySurvive() === false){
+      speciesSlot = pAequorFactory(i, mockUpStrand())
+    };
+    willLikelySurviveArray.push(speciesSlot);
+    speciesSlot = pAequorFactory(i, mockUpStrand())
+  };
+  return willLikelySurviveArray;
+}
+
+const similars = arr => {
+  let mostRelated = 0;
+  let registerMostRelated = null;
+  for(let i = 0;i < arr.length - 1; i++){
+    for(let y = 0; y < arr.length;y++){
+    if(i === y) y++;
+    if (arr[i].compareDna(arr[y]) > mostRelated) {
+      mostRelated = arr[i].compareDna(arr[y]);
+      registerMostRelated = `${arr[i].dna} e ${arr[y].dna}`
+    }
+    }   
+  }
+  console.log(mostRelated)
+  return registerMostRelated
+}
+
+console.log(similars(getSurvivors(20)))
+
